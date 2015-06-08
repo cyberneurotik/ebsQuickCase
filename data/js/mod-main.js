@@ -8,8 +8,9 @@ $('#formPopup').hide();
 $('#createCase').button();
 
 $('#createCase').on('click', function(){
+	var formUrl = chrome.extension.getURL('data/html/quick-case-form.html');
+
 	$('#formPopup').show();
-	var formUrl = chrome.extension.getURL('data/html/password-form.html');
 	$('#formPopup').load(formUrl);
 });
 
