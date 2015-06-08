@@ -1,0 +1,105 @@
+.classical {
+	margin:auto;
+
+	width: 560px;
+	background: #FFF;
+	padding: 30px 30px 20px 30px;
+	box-shadow: rgba(187,187,187,1) 0 0px 20px -1px;
+	-webkit-box-shadow: rgba(187,187,187,1) 0 0px 20px -1px;
+	font: 12px Arial, Helvetica, sans-serif;
+	color: #666;
+	border-radius: 10px;
+	-webkit-border-radius: 10px;
+}
+
+.classical table {
+	width:100%;
+}
+
+.classical > td {
+	width:54%;
+	/*vertical-align: top*/;
+}
+
+.classical h1 {
+	font: 24px "Trebuchet MS", Arial, Helvetica, sans-serif;
+	border-bottom: 2px solid #CCC;
+	margin-left: -10px;
+	margin-top: -20px;
+	color: #868686;
+}
+
+.classical label {
+	display: block;
+	color: #969696;
+}
+
+.classical label>span {
+	float: left;
+	width: 30%;
+	text-align: right;
+	padding-right: 10px;
+}
+
+.classical input[type="text"], .classical select {
+	width: 60%;
+	margin-right: 6px;
+	margin-bottom: 6px;
+	padding-left:3px;
+	border: 1px solid #000;
+	background: #fbfbfb;
+	height: 20px;
+	/*line-height: 15px;*/
+	outline: 0;
+}
+
+.classical textarea {
+	width:330px;
+	margin-right:20px;
+}
+
+#ldapSearchForm {
+	/*width:400px;*/
+}
+
+#ldapSearchForm label>span {
+	font-size:9pt;
+	color:#444;
+	width: 30%;
+	padding-right: 5px;
+}
+
+#ldapSearchForm input[type="text"] {
+	height:16px;
+	font-size:8pt;
+	width:60%;
+}
+
+#ldapSearchBtn {
+	font-size:8pt;
+}
+
+#ldapResults {
+	margin-bottom:4px;
+}
+
+#results {
+	font-size:8pt;
+	border-collapse:collapse;
+}
+
+#results td {
+	padding-left:3px;
+}
+
+#results, #results th, #results td {
+	border: 1px solid black;
+}
+
+#resultsHeader {
+	background-color:#DDD;
+}
+
+.hCenter {
+	margin-left:145px;
+}

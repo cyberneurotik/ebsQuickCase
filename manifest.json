@@ -1,0 +1,32 @@
+{
+  "manifest_version": 2,
+
+  "name": "Automagic Case Creation",
+  "description": "Automagically create and submit EBSuite cases.",
+  "version": "1.3",
+  "author": "Jeffery Spaulding",
+
+  "permissions": [
+    "storage"
+  ],
+
+  "web_accessible_resources": ["data/images/*.gif", "data/html/password-form.html"],
+
+  "content_scripts": [
+  	{
+  		"matches": ["*://techsupport.csun.edu/ozSptMain.jsp*"],
+  		"css": ["data/includes/jquery-ui-1.11.4.custom/jquery-ui.min.css", "data/css/create-case.css", "data/css/form-styles.css"],
+  		"js": ["data/includes/jquery-2.1.3.min.js", "data/includes/jquery-ui-1.11.4.custom/jquery-ui.min.js", "data/js/create-case.js"]
+  	},
+    {
+      "matches": ["*://techsupport.csun.edu/ozSptCaseSumry.jsp*"],
+      "css": ["data/includes/jquery-ui-1.11.4.custom/jquery-ui.min.css", "data/css/create-case.css", "data/css/form-styles.css"],
+      "js": ["data/includes/jquery-2.1.3.min.js", "data/includes/jquery-ui-1.11.4.custom/jquery-ui.min.js", "data/js/mod-summary.js"]
+    },
+    {
+      "matches": ["*://techsupport.csun.edu/ozSptCaseNew.jsp*"],
+      "css": ["data/includes/jquery-ui-1.11.4.custom/jquery-ui.min.css", "data/css/create-case.css", "data/css/form-styles.css"],
+      "js": ["data/includes/jquery-2.1.3.min.js", "data/includes/jquery-ui-1.11.4.custom/jquery-ui.min.js", "data/js/mod-casenew.js"]
+    }
+  ]
+}
