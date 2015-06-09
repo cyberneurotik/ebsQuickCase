@@ -119,6 +119,18 @@
 <link rel="stylesheet" type="text/css" href="../css/form-styles.css">
 
 <script>
+
+/**
+ * Note to self: Perhaps I should make a ebsEnhancement.js library that
+ * encapsulates the methods and objects I'm proposing here.
+ * i.e. A case object would abstractly hold the ability to create, update, 
+ * and close a case as well as provide information on any given case.
+ * i.e. A user object would abstractly hold information such as uid, name, 
+ * and perhaps the methods to save to LDAP.
+ * Note: Consider other possible objects. Perhaps case comments, prefabs,
+ * an other entities that might exist in EBSuite.
+ */
+
 var returnedUsers = [];
 var currentUser = 0;
 
@@ -297,6 +309,20 @@ $('#ldapSearchBtn').on('click', function(){
 	});
 });
 
+/**
+ * An elaborate function that gathers the data entered into the Quick Case form
+ * and submits that data via POST to https://techsupport.csun.edu/ozSptCaseNew.jsp
+ * to create the initial case. Upon success, data is scraped from the returned HTML
+ * page and the fields required to close the case are submitted via POST to 
+ * https://techsupport.csun.edu/ozSptCaseClose.jsp. Once the case is successfully 
+ * closed, a URL is generated based on the returned HTML which links to the case
+ * created.
+ *
+ * Note to self: Separate this function into its base functions. i.e.
+ * createCase()
+ * closeCase()
+ * updateCase()
+ */
 function createCase() {
 	caseDetails = $('#caseDetails').val();
 	resolutionDetails = $('#resolutionDetails').val();
@@ -479,6 +505,9 @@ function createCase() {
 	$('#formPopup').hide();
 }
 
+/**
+ * Injects a loading image gif based on the preferred size and element.
+ */
 function showLoader(element, size) {
 	var loaderGifUrl = chrome.extension.getURL('data/images/ajax-loader.gif');
 	var loaderGifSmallUrl = chrome.extension.getURL('data/images/ajax-loader-small.gif');
@@ -486,6 +515,11 @@ function showLoader(element, size) {
 	if(size == "small") $(element).html('<img style="display:block;margin:auto;" src="'+ loaderGifSmallUrl +'">');
 }
 
+/**
+ * I believe this function submits the resulting user from an LDAP search to
+ * the EBSuite system to update the user object on the server side.
+ * Note to self: Thororoughly review this function and comment it appropriately.
+ */
 function saveUser(uid, element) {
 	for(var i = 0; i < returnedUsers.length; i++) {
 		if(returnedUsers[i].uid == uid) {
