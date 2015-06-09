@@ -117,18 +117,31 @@
 <div id="hiddendiv"></div>
 
 <link rel="stylesheet" type="text/css" href="../css/form-styles.css">
+
 <script>
 var returnedUsers = [];
 var currentUser = 0;
 
-var caseName = "Password Reset - Performed";
-var prodCatName = "/Account/Password/Reset performed/";
-var prodCatId = "716";
-var caseDetails = "User requested password reset.";
-var resolutionDetails = "Verified user. Temporary password provided.";
-var resolutionCode = "FIX_PROVIDED";
-var problemCode = "SR";
+loadDefaultCaseData();
 
+/**
+ * Initializes the case data to the default of "Password Reset - Performed"
+ */
+function loadDefaultCaseData() {
+	var caseName = "Password Reset - Performed";
+	var prodCatName = "/Account/Password/Reset performed/";
+	var prodCatId = "716";
+	var caseDetails = "User requested password reset.";
+	var resolutionDetails = "Verified user. Temporary password provided.";
+	var resolutionCode = "FIX_PROVIDED";
+	var problemCode = "SR";
+}
+
+/**
+ * Creates a list of prefabricated case details for frequently created cases, 
+ * including "Password Reset - Performed", "Password Reset - Not Performed", 
+ * and "Gmail Question".
+ */
 $('#quickAction').on('change', function(){
 	if($(this).val() == "Password Reset - Performed") {
 		caseName = "Password Reset - Performed";
@@ -185,6 +198,9 @@ $('#quickAction').on('change', function(){
 
 $('#defaultInput').focus();
 
+/**
+ * Event listeners for the Cancel, Create, and Manual buttons
+ */
 $('#formCancelBtn').on('click', function() {
 	$('#formPopup').hide();
 });
@@ -204,6 +220,10 @@ $('#formManualBtn').on('click', function() {
 	window.open('https://techsupport.csun.edu/ozSptCaseNew.jsp', '_self');
 });
 
+/**
+ * Performs and LDAP search if the user hits the 'Enter' key while the
+ * search fields have focus.
+ */
 $('#ldapSearchForm input[type="text"]').keyup(function(event) {
 	if(event.keyCode == 13) {
 		$('#ldapSearchBtn').click();
@@ -214,6 +234,13 @@ $('#openSearch').on('click', function() {
 	$('#ldapSearchForm').slideToggle('slow');
 });
 
+/**
+ * Performs an LDAP search by sending the search fields as POST data to the
+ * webpage https://techsupport.csun.edu/ozSlsLOVContactLDAPSearch.jsp. This page
+ * returns the results as an HTML file, which is parsed and output as a <table>
+ * for the user. If there is only one user returned in the search, that user is
+ * automatically added in the 'Client:' field of the form.
+ */
 $('#ldapSearchBtn').on('click', function(){
 	var searchString = "field_0="+$('input[name="field_0"]').val()+
 		"&field_1="+$('input[name="field_1"]').val()+
