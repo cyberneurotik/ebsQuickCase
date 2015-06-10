@@ -135,9 +135,65 @@
  * and perhaps the methods to save to LDAP.
  * Note: Consider other possible objects. Perhaps case comments, prefabs,
  * an other entities that might exist in EBSuite.
+
+ * Note: Consider actively caching the Product/Category list such that
+ * the most frequently accessed categories are displayed quickly without
+ * calls to the web server. i.e. an array of category objects, which hold
+ * a 'parent', 'link', and 'name', property.
  */
 
-alert("userId is: " + userId);
+/**
+ * To Do List:
+ * Implement 'Create', 'Create/Close', and 'Manual' better
+ * Implement 'Assign To' field
+ 	* Determine 'Assign To' field in POST data (create test case)
+ 	* Implement 'Assign To' searchable combobox menu
+ * Implement 'Prodcut/Category' menu and search
+ 	* Rework interface to accomodate an expandable menu system
+ 	* Scrape HTML data from ozLOVProduct.jsp to create menu table
+ 	* Determine a method to cache items which are selected by user
+ 	* Implement a search that uses POST results
+ * Rework interface for usability
+ 	* Make 'caseName' field look better
+ 	* Expand the window to accomodate more fields and whitespace
+ 	* Consider icons for Phone / Chat / Person
+ 	* Consider (?) tooltips for each field, perhaps displayed upon hover
+ 	* Allow LDAP and ProdCat search to be welcoming to the user
+ 	* Consider space for advanced fields (i.e. building/room, phone#, etc.)
+ * Allow user to create their own custom Quick Actions
+ 	* Consider importing/exporting some sort of XML or CSV file
+ 	* Create a Quick Action based on the fields created
+ * Consider highlighting fields that have not been touched
+ 	* i.e. A light background behind "Location" if it has not yet been modified
+ * Push out new update to beta testers and gather usability data
+ 	* Consider criteria for user error when making a wide variety of cases
+ 	* Consider criteria for ease of use when making repetative cases
+
+ * Future Features:
+ 	* Settings page for chrome extension
+ 		* Toggle settings on/off (i.e. combobox)
+ 	* Case creation history (quick cases and manual cases)
+ 	* AJAX refresh EBSuite Views/Summary
+ 		* Periodically grab HTML from main/summary page and use JavaScript
+ 		* to replace the view/summary with an updated table
+ 	* Sound and graphic notifications upon case updates and assignment
+ 		* i.e. A soft 'ding' when a case is assigned
+ 	* Color code table rows based on priority
+ 		* Criteria on time since last update, time since created, priority, etc.
+ */
+
+var agentId = "";
+
+chrome.storage.local.get('agentId', function(result) {
+	if(result.agentId) {
+		agentId = result.agentId;
+	} else {
+		var element = $('input[name=sessionValMsg]').val();
+		var match = /USERID/.exec(element);
+		agentId = element.substring(match.index + 9, match.index + 13);
+		chrome.storage.local.set({'agentId': agentId});
+	}
+});
 
 var returnedUsers = []; // A list of users returned from an LDAP search
 var currentUser = 0; // The index of the currently selected user form an LDAP search
@@ -153,7 +209,7 @@ var currentCase = {
 	resolutionDetails: "Verified user. Temporary password provided.",
 	resolutionCode: "FIX_PROVIDED",
 	problemCode: "SR",
-	agentId: userId
+	agentId: agentId
 }
 
 /**
@@ -236,7 +292,6 @@ $('#quickAction').on('change', function(){
  */
 $('#formCancelBtn').on('click', function() {
 	$('#formPopup').hide();
-	// Hello World
 });
 
 $('#formCreateBtn').on('click', function() {
@@ -339,7 +394,7 @@ function pullCreateDetails() {
 	currentCase.caseName = $('#formCaseName').val();
 	currentCase.clientName = user.clientName;
 	currentCase.clientId = user.clientId;
-	// currentCase.userId =
+	// currentCase.agentId =
 	currentCase.source = $('select[name=source]').val();
 	currentCase.priority = $('select[name=priority]').val();
 	currentCase.impact = $('select[name=impact]').val();
@@ -355,7 +410,7 @@ function pullCreateDetails() {
  * Pulled from the form data entered by the user.
  */
 function pullCloseDetails() {
-	// currentCase.userId = 
+	// currentCase.agentId = 
 	// currentCase.resolutionCode = "FIX_PROVIDED";
 	currentCase.resolutionDetails = encodeURIComponent($('#resolutionDetails').val());
 	// currentCase.problemCode = "SR";
