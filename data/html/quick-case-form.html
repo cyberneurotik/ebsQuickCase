@@ -1,7 +1,9 @@
 <form class="classical">
 	<table>
 		<tr>
-			<td colspan="2"><h1 id="formCaseName">Password Reset - Performed</h1><br></td>
+			<td colspan="2">
+				<input type="text" id="formCaseName" name="formCaseName" value="Password Reset - Performed">
+			</td>
 		</tr>
 		<tr>
 			<td><label for="clientName">Client:</label></td>
@@ -100,6 +102,11 @@
 		<tr>
 			<td><textarea id="caseDetails" cols="40" rows="6" tabindex="3">User requested password reset.</textarea></td>
 			<td style="vertical-align:top;">
+				<label for="prodCatName">
+					<span>Prod/Cat:</span>
+					<input type="text" id="prodCatName" name="prodCatName" value="/Account/Password/Reset performed/">
+					<input type="hidden" id="prodCatId" name="prodCatId" value="716">
+				</label>
 				<input type="button" id="formCreateBtn" value="Create/Close" tabindex="5">
 				<input type="button" id="formManualBtn" value="Manual" tabindex="6">
 			</td>
@@ -119,7 +126,6 @@
 <link rel="stylesheet" type="text/css" href="../css/form-styles.css">
 
 <script>
-
 /**
  * Note to self: Perhaps I should make a ebsEnhancement.js library that
  * encapsulates the methods and objects I'm proposing here.
@@ -131,28 +137,35 @@
  * an other entities that might exist in EBSuite.
  */
 
-var returnedUsers = [];
-var currentUser = 0;
+alert("userId is: " + userId);
 
-loadDefaultCaseData();
+var returnedUsers = []; // A list of users returned from an LDAP search
+var currentUser = 0; // The index of the currently selected user form an LDAP search
 
 /**
  * Initializes the case data to the default of "Password Reset - Performed"
  */
-function loadDefaultCaseData() {
-	var caseName = "Password Reset - Performed";
-	var prodCatName = "/Account/Password/Reset performed/";
-	var prodCatId = "716";
-	var caseDetails = "User requested password reset.";
-	var resolutionDetails = "Verified user. Temporary password provided.";
-	var resolutionCode = "FIX_PROVIDED";
-	var problemCode = "SR";
+var currentCase = {
+	caseName: "Password Reset - Performed",
+	prodCatName: "/Account/Password/Reset performed/",
+	prodCatId: "716",
+	caseDetails: "User requested password reset.",
+	resolutionDetails: "Verified user. Temporary password provided.",
+	resolutionCode: "FIX_PROVIDED",
+	problemCode: "SR",
+	agentId: userId
 }
+
+/**
+ * Sets the focus of the cursor to the input set as <id="defaultInput">
+ */
+$('#defaultInput').focus();
 
 /**
  * Creates a list of prefabricated case details for frequently created cases, 
  * including "Password Reset - Performed", "Password Reset - Not Performed", 
- * and "Gmail Question".
+ * and "Gmail Question". This listener updates the form's contents when an
+ * option is selected.
  */
 $('#quickAction').on('change', function(){
 	if($(this).val() == "Password Reset - Performed") {
@@ -171,6 +184,10 @@ $('#quickAction').on('change', function(){
 		$('select[name=location]').val("Off-campus");
 		$('#caseDetails').val(caseDetails);
 		$('#resolutionDetails').val(resolutionDetails);
+		$('#prodCatName').val(prodCatName);
+		$('#prodCatId').val(prodCatId);
+		$('#formCaseName').val();
+		$('#formCaseName').val(caseName);
 
 	} else if($(this).val() == "Password Reset - Not Performed") {
 		caseName = "Password Reset - Not Performed";
@@ -188,6 +205,9 @@ $('#quickAction').on('change', function(){
 		$('select[name=location]').val("Off-campus");
 		$('#caseDetails').val(caseDetails);
 		$('#resolutionDetails').val(resolutionDetails);
+		$('#prodCatName').val(prodCatName);
+		$('#prodCatId').val(prodCatId);
+		$('#formCaseName').val(caseName);
 
 	} else if($(this).val() == "Gmail Question") {
 		caseName = "Gmail Question";
@@ -205,21 +225,25 @@ $('#quickAction').on('change', function(){
 		$('select[name=location]').val("Off-campus");
 		$('#caseDetails').val(caseDetails);
 		$('#resolutionDetails').val(resolutionDetails);
+		$('#prodCatName').val(prodCatName);
+		$('#prodCatId').val(prodCatId);
+		$('#formCaseName').val(caseName);
 	}
 });
-
-$('#defaultInput').focus();
 
 /**
  * Event listeners for the Cancel, Create, and Manual buttons
  */
 $('#formCancelBtn').on('click', function() {
 	$('#formPopup').hide();
+	// Hello World
 });
 
 $('#formCreateBtn').on('click', function() {
 	if($('#clientId').val()) {
-		createCase();
+		pullCreateDetails();
+		pullCloseDetails();
+		createCase(currentCase);
 	} else {
 		alert("No client!");
 	}
@@ -230,20 +254,6 @@ $('#formManualBtn').on('click', function() {
 		chrome.storage.local.set({'currentClient': returnedUsers[currentUser]});
 	}
 	window.open('https://techsupport.csun.edu/ozSptCaseNew.jsp', '_self');
-});
-
-/**
- * Performs and LDAP search if the user hits the 'Enter' key while the
- * search fields have focus.
- */
-$('#ldapSearchForm input[type="text"]').keyup(function(event) {
-	if(event.keyCode == 13) {
-		$('#ldapSearchBtn').click();
-	}
-});
-
-$('#openSearch').on('click', function() {
-	$('#ldapSearchForm').slideToggle('slow');
 });
 
 /**
@@ -310,209 +320,45 @@ $('#ldapSearchBtn').on('click', function(){
 });
 
 /**
- * An elaborate function that gathers the data entered into the Quick Case form
- * and submits that data via POST to https://techsupport.csun.edu/ozSptCaseNew.jsp
- * to create the initial case. Upon success, data is scraped from the returned HTML
- * page and the fields required to close the case are submitted via POST to 
- * https://techsupport.csun.edu/ozSptCaseClose.jsp. Once the case is successfully 
- * closed, a URL is generated based on the returned HTML which links to the case
- * created.
- *
- * Note to self: Separate this function into its base functions. i.e.
- * createCase()
- * closeCase()
- * updateCase()
+ * Performs and LDAP search if the user hits the 'Enter' key while the
+ * search fields have focus.
  */
-function createCase() {
-	caseDetails = $('#caseDetails').val();
-	resolutionDetails = $('#resolutionDetails').val();
-	resolutionDetails = encodeURIComponent(resolutionDetails);
+$('#ldapSearchForm input[type="text"]').keyup(function(event) {
+	if(event.keyCode == 13) {
+		$('#ldapSearchBtn').click();
+	}
+});
 
-	var source = $('select[name=source]').val();
-	var impact = $('select[name=impact]').val();
-	var priority = $('select[name=priority]').val();
-	var location = $('select[name=location]').val();
-
+/**
+ * Generates the POST data required to create a case.
+ * Pulled from the form data entered by the user.
+ */
+function pullCreateDetails() {
 	var user = returnedUsers[currentUser];
-	var clientName = user.clientName;
-	var clientId = user.clientId;
-	var email = user.email;
 
-	var formData = new FormData();
-		formData.append('caseName', caseName); // Case Name *Required
-		formData.append('customerName','');
-		formData.append('customerId','');
-		formData.append('contactName', clientName); // Contact Name *Required
-		formData.append('contactId', clientId); // Contact ID *Required
-		formData.append('divContactType','NORMAL'); // UNKNOWN
-		formData.append('cbExtViewable','Y'); // Externally Viewable Checkbox
-		formData.append('ownerId', userId); // UNKNOWN - Case Creator?
-		formData.append('SOURCE', source); // Source
-		formData.append('__SOURCE','Y');
-		formData.append('CF_188',''); // Requested Start Date
-		formData.append('CF_188_id','');
-		formData.append('__CF_188','Y');
-		formData.append('STATUS','RECEIVED');
-		formData.append('__STATUS','Y');
-		formData.append('expCloseDate',''); // Requested Completion Date
-		formData.append('__EXP_CLOSE_DATE','Y');
-		formData.append('__CF_ENTITY_FIELD_13',''); // UNKNOWN
-		formData.append('CF_13_id','');
-		formData.append('__CF_13','Y');
-		formData.append('CF_1',''); // IP Address
-		formData.append('CF_1_id','');
-		formData.append('__CF_1','Y');
-		formData.append('PRIORITY', priority); // Priority
-		formData.append('__PRIORITY','Y');
-		formData.append('CF_2',''); // Hardware Address
-		formData.append('CF_2_id','');
-		formData.append('__CF_2','Y');
-		formData.append('CF_91', impact); // Impact *Required
-		formData.append('CF_91_id','');
-		formData.append('__CF_91','Y');
-		formData.append('CF_27',''); // DNS Name
-		formData.append('CF_27_id','');
-		formData.append('__CF_27','Y');
-		formData.append('prodName', prodCatName); // Product/Category *Required
-		formData.append('prdCatId', prodCatId); // Product/Category ID *Required
-		formData.append('prdId','-1');
-		formData.append('__PRODUCT','Y');
-		formData.append('attachFile',''); // Attachments
-		formData.append('attachFile2','');
-		formData.append('attachFile3','');
-		formData.append('attachFile4','');
-		formData.append('PROBLEM_DESC', caseDetails); // Case Details *Required
-		formData.append('__PROBLEM_DESC','Y');
-		formData.append('CF_39', email); // Preferred Email Address
-		formData.append('CF_39_id','');
-		formData.append('__CF_39','Y');
-		formData.append('CF_5', location); // Location Type *Required
-		formData.append('CF_5_id','');
-		formData.append('__CF_5','Y');
-		formData.append('CF_40',''); // Preferred Phone Number
-		formData.append('CF_40_id','');
-		formData.append('__CF_40','Y');
-		formData.append('CF_7',''); // Building
-		formData.append('CF_7_id','');
-		formData.append('__CF_7','Y');
-		formData.append('CF_12',''); // Web Site
-		formData.append('CF_12_id','');
-		formData.append('__CF_12','Y');
-		formData.append('CF_10',''); // Room
-		formData.append('CF_10_id','');
-		formData.append('__CF_10','Y');
-		formData.append('PROBLEM_CODE', problemCode); // Problem Code
-		formData.append('__PROBLEM_CODE','Y');
-		formData.append('qas','');
-		formData.append('astid','-1');
-		formData.append('projectId','-1');
-		formData.append('iclid','0');
-		formData.append('pcseid','-1');
-		formData.append('ahsFormAction','createCase');
-
-	$('#buttonBar').append('<div style="width:25px;height:21px;padding-top:4px;float:left;" uid="'+ returnedUsers[currentUser].uid +'" class="caseProgress">Case</div>');
-	$('.caseProgress').last().button();
-	showLoader($('.caseProgress').last(), 'small');
-
-	var caseNumber = "";
-
-	// Create the case
-	// alert("Creating case from form data");
-	$.ajax({
-		url: 'https://techsupport.csun.edu/ozSptCaseNew.jsp',
-		data: formData,
-		processData: false,
-		contentType: false,
-		type: 'POST',
-		success: function(data) {
-			var link = $(data).find('a:eq(0)').attr('href');
-			var caseId = link.substring(25,31);
-			link = 'https://techsupport.csun.edu/ozSptCaseClose.jsp?id=' + caseId;
-
-			// alert("Grabbing the Close Case data.");
-			// Grab the case ID from the redirect page and use that to access the "close case" page
-			$.ajax({
-				url: link,
-				success: function(data) {
-					var pageData = $(data);
-					var emailTo = pageData.find('input[name=emailTo]').val();
-					var emailSubject = pageData.find('input[name=emailSubject]').val();
-					var emailContent = pageData.find('textarea[name=emailContent]').html();
-					var closeCaseData = "caseOwnerId="+userId+
-						"&caseStatus=CLOSED"+
-						"&resolutionCode="+resolutionCode+
-						"&resolutionDetail="+resolutionDetails+
-						"&caseComment="+
-						"&PROBLEM_CODE="+problemCode+
-						"&__PROBLEM_CODE=Y"+
-						"&sendEmail=Y"+
-						"&fromAddr=1998"+
-						"&emailTo="+emailTo+
-						"&ccId=-1"+
-						"&emailSubject="+emailSubject+
-						"&emailContent="+emailContent+
-						"&cbAddEmailToLog=Y"+
-						"&addNoteCase=Y"+
-						"&addNoteCustomer=Y"+
-						"&addNoteContact=Y"+
-						"&addNoteSubject="+
-						"&addNoteContent="+
-						"&taskName="+
-						"&ownerId="+userId+
-						"&dueDate="+
-						"&taskDetail="+
-						"&surveyId=-1"+
-						"&surveyEmlTo="+emailTo+
-						"&surveyEmlSubject="+
-						"&surveyEmlContent="+
-						"&cbAddSurveyEmlToLog=Y"+
-						"&ahsFormAction=updateClose"+
-						"&id="+caseId+
-						"&commentstatusdirty=Y"+
-						"&commentdirty=Y";
-
-					// Close the case with the scraped data
-					$.ajax({
-						url: 'https://techsupport.csun.edu/ozSptCaseClose.jsp',
-						data: closeCaseData,
-						type: 'POST',
-						success: function(data) {
-							$('.caseProgress').each(function(){
-								if($(this).attr('uid') == user.uid) {
-									var caseUrl = 'https://techsupport.csun.edu/ozSptCaseDtn.jsp?id='+caseId+'&cpos=1';
-									$(this).html('&#10003;');
-									$(this).attr('href', caseUrl)
-									$(this).on('click', function() {
-										window.open($(this).attr('href'));
-									});
-								}
-							});
-						},
-						error: function () {
-							alert("Error closeing case.");
-						}
-					});
-				},
-				error: function() {
-					alert("Error loading the close case page.");
-				}
-			});
-		},
-		error: function() {
-			alert("An error occured while submitting the case.");
-		}
-	});
-	$('#formPopup').hide();
+	currentCase.caseName = $('#formCaseName').val();
+	currentCase.clientName = user.clientName;
+	currentCase.clientId = user.clientId;
+	// currentCase.userId =
+	currentCase.source = $('select[name=source]').val();
+	currentCase.priority = $('select[name=priority]').val();
+	currentCase.impact = $('select[name=impact]').val();
+	currentCase.prodCatName = $('#prodCatName').val();
+	currentCase.prodCatId = $('#prodCatId').val();
+	currentCase.caseDetails = $('#caseDetails').val();
+	currentCase.location = $('select[name=location]').val();
+	currentCase.email = user.email;
 }
 
 /**
- * Injects a loading image gif based on the preferred size and element.
+ * Generates the POST data required to close a case.
+ * Pulled from the form data entered by the user.
  */
-function showLoader(element, size) {
-	var loaderGifUrl = chrome.extension.getURL('data/images/ajax-loader.gif');
-	var loaderGifSmallUrl = chrome.extension.getURL('data/images/ajax-loader-small.gif');
-	if(size == "medium") $(element).html('<img style="display:block;margin:auto;" src="'+ loaderGifUrl +'">');
-	if(size == "small") $(element).html('<img style="display:block;margin:auto;" src="'+ loaderGifSmallUrl +'">');
+function pullCloseDetails() {
+	// currentCase.userId = 
+	// currentCase.resolutionCode = "FIX_PROVIDED";
+	currentCase.resolutionDetails = encodeURIComponent($('#resolutionDetails').val());
+	// currentCase.problemCode = "SR";
 }
 
 /**

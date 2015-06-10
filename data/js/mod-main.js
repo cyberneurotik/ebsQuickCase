@@ -20,7 +20,13 @@ $('#createCase').on('click', function(){
 	$('#formPopup').load(formUrl);
 });
 
-var userId = "";
-var scriptTag = $('body > div:eq(0) > script:eq(0)').html();
-var match = /genappend_submiturl/.exec(scriptTag);
-userId = scriptTag.substring(match.index + 35, match.index + 39);
+chrome.storage.local.get('userId', function(result) {
+	if(result.userId) {
+		alert("userId found! It's: " + result.userId);
+	} else {
+		var element = $('input[name=sessionValMsg]').val();
+		var match = /USERID/.exec(element);
+		var userId = element.substring(match.index + 9, match.index + 13);
+		chrome.storage.local.set({'userId': userId});
+	}
+});
